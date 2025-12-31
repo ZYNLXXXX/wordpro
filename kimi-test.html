@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>Kimi 接口测试 - WordPro</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:#f5f7fb;
+      margin:0;
+      padding:20px;
+    }
+    .wrap {
+      max-width: 820px;
+      margin:0 auto;
+      background:#ffffff;
+      border-radius:10px;
+      padding:20px 24px;
+      box-shadow:0 4px 18px rgba(0,0,0,.06);
+      border:1px solid #e3e9f2;
+    }
+    h1 {font-size:1.4rem;margin:0 0 12px;color:#174ea6;}
+    label {display:block;margin:10px 0 4px;color:#444;}
+    input, textarea {
+      width:100%;
+      box-sizing:border-box;
+      padding:8px 10px;
+      border-radius:6px;
+      border:1px solid #c9d5f0;
+      font:inherit;
+    }
+    textarea {min-height:90px;resize:vertical;}
+    button {
+      margin-top:12px;
+      padding:8px 16px;
+      border-radius:6px;
+      border:1px solid #4f8df9;
+      background:#e3f2ff;
+      color:#174ea6;
+      font:inherit;
+      cursor:pointer;
+    }
+    button:hover {background:#c9e2ff;}
+    .result {
+      margin-top:16px;
+      padding:10px 12px;
+      background:#f3f6ff;
+      border-radius:6px;
+      white-space:pre-wrap;
+      font-size:0.95rem;
+    }
+    .error {color:#c62828;}
+    .ok {color:#1b5e20;}
+    .small {font-size:0.85rem;color:#666;margin-top:4px;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Kimi 接口测试</h1>
+    <div class="small">
+      说明：这个页面直接调用 Kimi API，用于测试密钥是否可用。注意：由于浏览器 CORS 限制，可能需要配置代理或使用浏览器扩展。
+    </div>
+
+    <label>API Key（不填则用 WordPro 里默认的）</label>
+    <input id="key" type="password" placeholder="可留空，使用默认密钥">
+
+    <label>测试提示词（Prompt）</label>
+    <textarea id="prompt">You are an English teacher. Please write one short greeting sentence in English.</textarea>
+
+    <button id="run">测试调用</button>
+
+    <div id="status" class="small"></div>
+    <div id="output" class="result"></div>
+  </div>
+
+  <script>
+    document.getElementById('run').onclick = async function () {
+      const key = document.getElementById('key').value.trim();
+      const prompt = document.getElementById('prompt').value.trim();
+      const statusEl = document.getElementById('status');
+      const outEl = document.getElementById('output');
+
+      statusEl.textContent = '请求中...';
+      outEl.textContent = '';
+
+      try {
+        // 使用默认密钥（如果用户未输入）
+        const apiKey = key || 'sk-bHkQdxffxkZ2pU8OSzCoOzyByjIzgLK1rovMRwUIPm8q0s4K';
+        if (!apiKey) {
+          statusEl.innerHTML = '<span class="error">请提供 API Key</span>';
+          return;
+        }
+        
+        const resp = await fetch('https://api.moonshot.cn/v1/chat/completions', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: 'moonshot-v1-8k',
+            messages: [
+              { role: 'system', content: '你是一个英语老师。' },
+              { role: 'user', content: prompt }
+            ],
+            temperature: 0.6
+          })
+        });
+        const raw = await resp.text();
+
+        let data;
+        try {
+          data = JSON.parse(raw);
+        } catch (e) {
+          // 不是 JSON，直接把原始响应展示出来，方便排错
+          statusEl.innerHTML = '<span class="error">返回的不是 JSON（可能是 404 或服务器错误 HTML） - HTTP ' + resp.status + '</span>';
+          outEl.textContent = raw;
+          return;
+        }
+
+        if (!resp.ok) {
+          statusEl.innerHTML = '<span class="error">调用失败，HTTP ' + resp.status + '</span>';
+          outEl.textContent = JSON.stringify(data, null, 2);
+          return;
+        }
+
+        const txt = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+        statusEl.innerHTML = '<span class="ok">调用成功</span>';
+        outEl.textContent = txt || JSON.stringify(data, null, 2);
+      } catch (e) {
+        let errorMsg = e.message;
+        if (errorMsg.includes('CORS') || errorMsg.includes('Failed to fetch')) {
+          errorMsg += '（可能是 CORS 跨域问题，需要配置代理或使用浏览器扩展）';
+        }
+        statusEl.innerHTML = '<span class="error">请求异常：' + errorMsg + '</span>';
+        outEl.textContent = '错误详情：' + e.stack || e.toString();
+      }
+    };
+  </script>
+</body>
+</html>
+
+

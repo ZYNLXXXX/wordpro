@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单词学习系统</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 动态科技背景动画 -->
+    <div id="tech-bg"></div>
+    <!-- 主应用容器 -->
+    <div id="app-root">
+        <!-- 导航区域 -->
+        <nav id="navbar">
+            <div class="logo">WordPro</div>
+            <ul class="nav-tabs">
+                <li class="tab" data-tab="study">学习</li>
+                <li class="tab" data-tab="review">复习</li>
+                <li class="tab" data-tab="article">文章生成</li>
+                <li class="tab" data-tab="words">单词管理</li>
+            </ul>
+        </nav>
+        <!-- 动态内容区域（页面切换加载至此） -->
+        <main id="main-panel"></main>
+        <!-- 进度/统计显示区 -->
+        <footer id="footer-stats">
+            <div class="stats"></div>
+            <div class="progress-bar-wrapper">
+                <div class="progress-bar-bg">
+                    <div class="progress-bar" style="width:0%"></div>
+                </div>
+                <span class="progress-text"></span>
+            </div>
+        </footer>
+    </div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
